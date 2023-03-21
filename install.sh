@@ -2,7 +2,7 @@
 
 show_help() {
 cat << EOF
-Usage: ${0##*/} [-hv] [-a ARN] [-i GROUP,GROUP,...] [-l GROUP,GROUP,...] [-s GROUP] [-p PROGRAM] [-u "ARGUMENTS"] [-r RELEASE]
+Usage: ${0##*/} [-hv] [-a ARN] [-i GROUP,GROUP,...] [-l GROUP,GROUP,...] [-s GROUP] [-p PROGRAM] [-u "ARGUMENTS"] [-r RELEASE] [-c CRON]
 Install import_users.sh and authorized_key_commands.
 
     -h                 display this help and exit
@@ -26,6 +26,7 @@ Install import_users.sh and authorized_key_commands.
     -r release         Specify a release of aws-ec2-ssh to download from GitHub. This argument is
                        passed to \`git clone -b\` and so works with branches and tags.
                        Defaults to 'master'
+    -c cron            Cron at which users should be refreshed, defaults to */10 * * * *
 
 
 EOF
@@ -45,8 +46,9 @@ USERADD_ARGS=""
 USERDEL_PROGRAM=""
 USERDEL_ARGS=""
 RELEASE="master"
+CRON="*/10 * * * *"
 
-while getopts :hva:i:l:s:p:u:d:f:r: opt
+while getopts :hva:i:l:s:p:u:d:f:r:c: opt
 do
     case $opt in
         h)
@@ -83,6 +85,9 @@ do
         r)
             RELEASE="$OPTARG"
             ;;
+        c)
+            CRON="$OPTARG"
+            ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
             show_help
@@ -114,6 +119,13 @@ fi
 if ! [ -x "$(which git)" ]; then
     echo "git executable not found - exiting!"
     exit 1
+fi
+
+# Validate the input string as a cron timing format
+if [[ $CRON =~ ^(\*|[0-9\-\/\,]+)\s+(\*|[0-9\-\/\,]+)\s+(\*|[0-9\-\/\,]+)\s+(\*|[0-9\-\/\,]+)\s+(\*|[0-9\-\/\,]+)$ ]]; then
+  echo "The given string '$CRON' is a valid cron timing format."
+else
+  echo "The given string '$CRON' is not a valid cron timing format."
 fi
 
 tmpdir=$(mktemp -d)
@@ -176,7 +188,7 @@ SHELL=/bin/bash
 PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/opt/aws/bin
 MAILTO=root
 HOME=/
-*/1 * * * * root $IMPORT_USERS_SCRIPT_FILE
+${CRON} root $IMPORT_USERS_SCRIPT_FILE
 EOF
 chmod 0644 /etc/cron.d/import_users
 
