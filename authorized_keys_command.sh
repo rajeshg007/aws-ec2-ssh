@@ -17,20 +17,24 @@ fi
 # This can be used if you define your users in one AWS account, while the EC2
 # instance you use this script runs in another.
 : ${ASSUMEROLE:=""}
-
-if [[ ! -z "${ASSUMEROLE}" ]]
+if [ "$MACHINE_TYPE" == "aws" ]
 then
-  STSCredentials=$(aws sts assume-role \
-    --role-arn "${ASSUMEROLE}" \
-    --role-session-name something \
-    --query '[Credentials.SessionToken,Credentials.AccessKeyId,Credentials.SecretAccessKey]' \
-    --output text)
+  if [[ ! -z "${ASSUMEROLE}" ]]
+  then
+    STSCredentials=$(aws sts assume-role \
+      --role-arn "${ASSUMEROLE}" \
+      --role-session-name something \
+      --query '[Credentials.SessionToken,Credentials.AccessKeyId,Credentials.SecretAccessKey]' \
+      --output text)
 
-  AWS_ACCESS_KEY_ID=$(echo "${STSCredentials}" | awk '{print $2}')
-  AWS_SECRET_ACCESS_KEY=$(echo "${STSCredentials}" | awk '{print $3}')
-  AWS_SESSION_TOKEN=$(echo "${STSCredentials}" | awk '{print $1}')
-  AWS_SECURITY_TOKEN=$(echo "${STSCredentials}" | awk '{print $1}')
-  export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_SECURITY_TOKEN
+    AWS_ACCESS_KEY_ID=$(echo "${STSCredentials}" | awk '{print $2}')
+    AWS_SECRET_ACCESS_KEY=$(echo "${STSCredentials}" | awk '{print $3}')
+    AWS_SESSION_TOKEN=$(echo "${STSCredentials}" | awk '{print $1}')
+    AWS_SECURITY_TOKEN=$(echo "${STSCredentials}" | awk '{print $1}')
+    export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_SECURITY_TOKEN
+  fi
+else
+    export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_REGION
 fi
 
 UnsaveUserName="$1"

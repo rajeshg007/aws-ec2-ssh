@@ -60,26 +60,39 @@ fi
 # Possibility to provide custom userdel arguments
 : ${USERDEL_ARGS:="--force --remove"}
 
+# Update Machine type
+: ${MACHINE_TYPE:="aws"}
+
 # Initizalize INSTANCE variable
-METADATA_TOKEN=$(curl -s -X PUT -H 'x-aws-ec2-metadata-token-ttl-seconds: 60' http://169.254.169.254/latest/api/token)
-INSTANCE_ID=$(curl -s -H "x-aws-ec2-metadata-token: ${METADATA_TOKEN}" http://169.254.169.254/latest/meta-data/instance-id)
-REGION=$(curl -s -H "x-aws-ec2-metadata-token: ${METADATA_TOKEN}" http://169.254.169.254/latest/dynamic/instance-identity/document | grep region | awk -F\" '{print $4}')
+if [ "$MACHINE_TYPE" == "aws" ]
+then
+    METADATA_TOKEN=$(curl -s -X PUT -H 'x-aws-ec2-metadata-token-ttl-seconds: 60' http://169.254.169.254/latest/api/token)
+    INSTANCE_ID=$(curl -s -H "x-aws-ec2-metadata-token: ${METADATA_TOKEN}" http://169.254.169.254/latest/meta-data/instance-id)
+    REGION=$(curl -s -H "x-aws-ec2-metadata-token: ${METADATA_TOKEN}" http://169.254.169.254/latest/dynamic/instance-identity/document | grep region | awk -F\" '{print $4}')
+else
+    REGION=$AWS_REGION
+fi
 
 function setup_aws_credentials() {
-    local stscredentials
-    if [[ ! -z "${ASSUMEROLE}" ]]
+    if [ "$MACHINE_TYPE" == "aws" ]
     then
-        stscredentials=$(aws sts assume-role \
-            --role-arn "${ASSUMEROLE}" \
-            --role-session-name something \
-            --query '[Credentials.SessionToken,Credentials.AccessKeyId,Credentials.SecretAccessKey]' \
-            --output text)
+        local stscredentials
+        if [[ ! -z "${ASSUMEROLE}" ]]
+        then
+            stscredentials=$(aws sts assume-role \
+                --role-arn "${ASSUMEROLE}" \
+                --role-session-name something \
+                --query '[Credentials.SessionToken,Credentials.AccessKeyId,Credentials.SecretAccessKey]' \
+                --output text)
 
-        AWS_ACCESS_KEY_ID=$(echo "${stscredentials}" | awk '{print $2}')
-        AWS_SECRET_ACCESS_KEY=$(echo "${stscredentials}" | awk '{print $3}')
-        AWS_SESSION_TOKEN=$(echo "${stscredentials}" | awk '{print $1}')
-        AWS_SECURITY_TOKEN=$(echo "${stscredentials}" | awk '{print $1}')
-        export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_SECURITY_TOKEN
+            AWS_ACCESS_KEY_ID=$(echo "${stscredentials}" | awk '{print $2}')
+            AWS_SECRET_ACCESS_KEY=$(echo "${stscredentials}" | awk '{print $3}')
+            AWS_SESSION_TOKEN=$(echo "${stscredentials}" | awk '{print $1}')
+            AWS_SECURITY_TOKEN=$(echo "${stscredentials}" | awk '{print $1}')
+            export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_SECURITY_TOKEN
+        fi
+    else
+        export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_REGION
     fi
 }
 

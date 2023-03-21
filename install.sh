@@ -120,7 +120,7 @@ tmpdir=$(mktemp -d)
 
 cd "$tmpdir"
 
-git clone -b "$RELEASE" https://github.com/widdix/aws-ec2-ssh.git
+git clone -b "$RELEASE" https://github.com/rajeshg007/aws-ec2-ssh.git
 
 cd "$tmpdir/aws-ec2-ssh"
 
@@ -176,7 +176,7 @@ SHELL=/bin/bash
 PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/opt/aws/bin
 MAILTO=root
 HOME=/
-*/10 * * * * root $IMPORT_USERS_SCRIPT_FILE
+*/1 * * * * root $IMPORT_USERS_SCRIPT_FILE
 EOF
 chmod 0644 /etc/cron.d/import_users
 
