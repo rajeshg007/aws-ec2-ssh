@@ -58,7 +58,7 @@ fi
 : ${USERDEL_PROGRAM:="/usr/sbin/userdel"}
 
 # Possibility to provide custom userdel arguments
-: ${USERDEL_ARGS:="--force --remove"}
+: ${USERDEL_ARGS:=""}
 
 # Update Machine type
 : ${MACHINE_TYPE:="aws"}
